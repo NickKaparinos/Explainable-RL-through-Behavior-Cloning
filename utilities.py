@@ -1,5 +1,5 @@
 """
-Nikos Kaparinos 119 - Julio Hamiti xxx
+Nikos Kaparinos 119 - Julio Hamiti 106
 2023
 """
 import cv2
