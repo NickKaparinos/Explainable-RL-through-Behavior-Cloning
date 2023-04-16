@@ -36,7 +36,7 @@ def main():
 
     # Record video
     env = gym.make(env_id)
-    record_videos(model, env, ppo_predict, log_dir=log_dir, num_episodes=2)
+    record_videos(model, env, ppo_predict_fn, log_dir=log_dir, num_episodes=2)
 
     # Execution Time
     end = time.perf_counter()

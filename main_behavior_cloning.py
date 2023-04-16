@@ -41,16 +41,17 @@ def main():
     project_name = f'AML-BC-{env_id[:-3]}-{n_dataset}'
     with open(f'{datasets_dir}/{dataset_name}', 'rb') as f:
         dataset = pickle.load(f)
-    X, y = dataset[:, :-1], dataset[:, -1]
+    dataset = add_feature_names(dataset, env_id)
+    X, y = dataset.iloc[:, :-1], dataset.iloc[:, -1]
 
     # Env
     env = gym.make(env_id)
 
-    # # Agent evaluation
-    # model = PPO.load(saved_model)
-    # rl_agent_reward_list = evaluate_agent(model, env, ppo_predict, num_episodes=100)
-    # rl_agent_mean = mean(rl_agent_reward_list)
-    #
+    # Agent evaluation
+    model = PPO.load(saved_model)
+    rl_agent_reward_list = evaluate_agent(model, env, ppo_predict_fn, num_episodes=10)
+    rl_agent_mean = mean(rl_agent_reward_list)
+
     # # SVM classifier
     # best_performance, best_model = -9999, None
     # kernels = ['linear', 'poly', 'rbf']
@@ -91,22 +92,44 @@ def main():
     # # Save video
     # record_videos(best_model, env, sklearn_predict_action, log_dir=video_dir, num_episodes=n_videos, prefix='SVM-')
 
+    # Decision Tree
     cls = DecisionTreeClassifier(max_depth=4, criterion='gini', random_state=0)
     model = Pipeline([
         ('scaler', MinMaxScaler()),
         ('clf', cls)])
-    model.fit(X, y)
-    y_pred = model.predict(X)
+    model.fit(X.values, y.values)
+    y_pred = model.predict(X.values)
     acc = accuracy_score(y, y_pred)
     tree.plot_tree(cls)
 
+    # Evaluate Behavior Cloning agent on the RL environment
+    reward_list = evaluate_agent(model, env, sklearn_predict_fn, num_episodes=10)
+    average_reward = mean(reward_list)
+    performance_compared_to_rl = compare_agents_performance(average_reward, rl_agent_mean)
+    print(f"Decision Tree Agent:\nTraining accuracy = {acc}\nAverage reward = {average_reward}")
+    print(f"Performance compared to RL: {performance_compared_to_rl:.2f}")
+
+    # Feature Importances
+    dt_feature_importances = cls.feature_importances_
+
+    # Logistic regression
     cls = LogisticRegression(random_state=0)
     model = Pipeline([
         ('scaler', MinMaxScaler()),
         ('clf', cls)])
-    model.fit(X, y)
-    y_pred = model.predict(X)
+    model.fit(X.values, y.values)
+    y_pred = model.predict(X.values)
     acc = accuracy_score(y, y_pred)
+
+    # Evaluate Behavior Cloning agent on the RL environment
+    reward_list = evaluate_agent(model, env, sklearn_predict_fn, num_episodes=10)
+    average_reward = mean(reward_list)
+    performance_compared_to_rl = compare_agents_performance(average_reward, rl_agent_mean)
+    print(f"\nLogistic Regression Agent:\nTraining accuracy = {acc}\nAverage reward = {average_reward}")
+    print(f"Performance compared to RL: {performance_compared_to_rl:.2f}")
+
+    # Feature Importances
+    logistic_feature_importances = cls.coef_
 
     # TODO plot decision tree and logistic importances
 
