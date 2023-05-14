@@ -20,8 +20,8 @@ def main():
     """ Create expert datasets using trained agent """
     # Environment
     start = time.perf_counter()
-    env_id = 'CartPole-v1'
-    saved_model = './logs/CartPole/PPO_Apr_07_2023_22_26_18/model.zip'
+    env_id = 'LunarLander-v2'
+    saved_model = './logs/LunarLander/PPO_09_Nov_2022_08_40_24/model.zip'
     dataset_size = 10_000
     env = gym.make(env_id)
 
@@ -44,7 +44,7 @@ def main():
     # Save datasets
     datasets_dir = f'logs/{env_id[:-3]}'
     makedirs(datasets_dir, exist_ok=True)
-    with open(f'{datasets_dir}/{env_id[:-3]}_dataset_{dataset_size}.pickle', 'wb') as f:
+    with open(f'{datasets_dir}/dataset_{dataset_size}.pickle', 'wb') as f:
         pickle.dump(dataset, f)
 
     # Execution Time

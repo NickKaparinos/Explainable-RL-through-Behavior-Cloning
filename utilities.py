@@ -2,7 +2,10 @@
 Nikos Kaparinos 119 - Julio Hamiti 106
 2023
 """
+from os import makedirs
+
 import cv2
+# import gymnasium as gym
 import gym
 import numpy as np
 import pandas as pd
@@ -10,14 +13,28 @@ from gym import wrappers
 from os import makedirs
 
 
-# def add_feature_names(dataset: np.array, env_id: str) -> pd.DataFrame:
-#     """ Converts the dataset from np.array to pd.DataFrame by adding column names """
-#     if env_id == 'CartPole-v1':
-#         feature_names = ["Cart Position", "Cart Velocity", "Pole Angle", "Pole Angular Velocity", "Action"]
-#     # TODO
-#
-#     dataset = pd.DataFrame(data=dataset, columns=feature_names)
-#     return dataset
+def add_feature_names(dataset: np.array, env_id: str) -> pd.DataFrame:
+    """ Converts the dataset from np.array to pd.DataFrame by adding column names """
+    if env_id == 'CartPole-v1':
+        feature_names = ["Cart Position", "Cart Velocity", "Pole Angle", "Pole Angular Velocity"]
+        action_names = ['Left', 'Right']
+    elif env_id == 'MountainCar-v0':
+        feature_names = ["Position", "Velocity"]
+        action_names = ['Left', 'Don’t accelerate', 'Right']
+    elif env_id == 'Acrobot-v1':
+        feature_names = ["Cosine of theta1", "Sine of theta1", "Cosine of theta2", "Sine of theta2",
+                         "Angular velocity of theta1", "Angular velocity of theta2"]
+        action_names = ['Torque=-1', 'Torque=0', 'Torque=+1']
+    elif env_id == 'LunarLander-v2':
+        feature_names = ["X", "Y", "X velocity", "Y velocity", "Angle", "Angular Velocity", "Left leg flag",
+                         "Right leg flag"]
+        action_names = ['Do Nothing', 'Fire left engine', 'Fire main engine', 'Fire right engine']
+    else:
+        exit(1)
+    feature_names.append("Action")
+
+    dataset = pd.DataFrame(data=dataset, columns=feature_names)
+    return dataset, action_names
 
 
 def evaluate_agent(agent, env, predict_fn, num_episodes: int = 100) -> list:

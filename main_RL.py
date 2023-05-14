@@ -14,14 +14,14 @@ def main():
     """ Train Proximal Policy Agent """
     # Environment       'CartPole-v1' 'MountainCar-v0' 'Acrobot-v1' 'LunarLander-v2'
     start = time.perf_counter()
-    env_id = 'CartPole-v1'
+    env_id = 'LunarLander-v2'
     env = gym.make(env_id)
 
     if 'MountainCar' in env_id:
         env._max_episode_steps = 500
 
     # Logging
-    config = {'policy_type': 'MlpPolicy', 'total_timesteps': 5_000, 'env_id': env_id}
+    config = {'policy_type': 'MlpPolicy', 'total_timesteps': 2_000_000, 'env_id': env_id}
     model_name = f'PPO_{time.strftime("%b_%d_%Y_%H_%M_%S", time.localtime())}'
     log_dir = f'logs/{env_id[:-3].replace("/", "-")}/{model_name}/'
     makedirs(log_dir, exist_ok=True)

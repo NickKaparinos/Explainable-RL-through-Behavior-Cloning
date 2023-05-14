@@ -6,113 +6,88 @@ Nikos Kaparinos 119 - Julio Hamiti 106
 import os
 import pickle
 import time
-from itertools import product
 from statistics import mean
-from sklearn import tree
+
 import gymnasium as gym
-from sklearn.metrics import accuracy_score
-from sklearn.neighbors import KNeighborsClassifier, NearestCentroid
-from sklearn.svm import SVC
-from sklearn.tree import DecisionTreeClassifier
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn import tree
 from sklearn.linear_model import LogisticRegression
-from stable_baselines3 import PPO
-from tqdm import tqdm
+from sklearn.metrics import accuracy_score
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import MinMaxScaler
-from sklearn.neural_network import MLPClassifier
-import wandb
+from sklearn.tree import DecisionTreeClassifier
+from stable_baselines3 import PPO
+
 from utilities import *
 
 
 def main():
     """ Train behavior cloning models """
     start = time.perf_counter()
-    env_id = 'CartPole-v1'
-    saved_model = './logs/CartPole/PPO_Apr_07_2023_22_26_18/model.zip'
+    env_id = 'LunarLander-v2'
+    saved_model = './logs/LunarLander/PPO_09_Nov_2022_08_40_24/model.zip'
     log_dir = f'logs/{env_id[:-3]}/'
-    datasets_dir = f'logs/{env_id[:-3]}'
-    n_dataset = 10000
-    n_videos = 6
-    video_dir = f'{log_dir}Dataset-{n_dataset}/'
     os.makedirs(log_dir, exist_ok=True)
+    n_dataset, n_videos, n_evaluation_episodes = 10_000, 1, 100
+    sns.set()
 
     # Load dataset
     dataset_name = f'dataset_{n_dataset}.pickle'
-    project_name = f'AML-BC-{env_id[:-3]}-{n_dataset}'
-    with open(f'{datasets_dir}/{dataset_name}', 'rb') as f:
+    with open(f'{log_dir}/{dataset_name}', 'rb') as f:
         dataset = pickle.load(f)
-    dataset = add_feature_names(dataset, env_id)
+    dataset, action_names = add_feature_names(dataset, env_id)
     X, y = dataset.iloc[:, :-1], dataset.iloc[:, -1]
 
-    # Env
+    # RL Agent evaluation
     env = gym.make(env_id)
-
-    # Agent evaluation
     model = PPO.load(saved_model)
-    rl_agent_reward_list = evaluate_agent(model, env, ppo_predict_fn, num_episodes=10)
+    rl_agent_reward_list = evaluate_agent(model, env, ppo_predict_fn, num_episodes=n_evaluation_episodes)
     rl_agent_mean = mean(rl_agent_reward_list)
 
-    # # SVM classifier
-    # best_performance, best_model = -9999, None
-    # kernels = ['linear', 'poly', 'rbf']
-    # gamma_list = [0.01, 0.1, 0.25, 0.5, 1.0, 2.0, 10.0, 100.0]
-    # C_list = [0.01, 0.1, 0.25, 0.5, 1.0, 2.0, 10.0, 100.0]
-    # # gamma_list = [1]
-    # # C_list = [1]
+    # Save video
+    record_videos(model, env, ppo_predict_fn, log_dir=log_dir, num_episodes=n_videos, prefix='RL-')
 
-    # for kernel, C in tqdm(product(kernels, C_list)):
-    #     for idx, gamma in enumerate(gamma_list):
-    #         if idx >= 1 and kernel != 'rbf':
-    #             continue
-    #         cls = SVC(C=C, kernel=kernel, gamma=gamma, random_state=0)
-    #         model = Pipeline([
-    #             ('scaler', MinMaxScaler()),
-    #             ('clf', cls)])
-    #
-    #         train_start = time.perf_counter()
-    #         model.fit(X, y)
-    #         train_end = time.perf_counter()
-    #         train_duration = train_end - train_start
-    #
-    #         # Evaluation
-    #         y_pred = model.predict(X)
-    #         acc = accuracy_score(y, y_pred)
-    #
-    #         # Wandb logging
-    #         model_name = f'SVM_{time.strftime("%d_%b_%Y_%H_%M_%S", time.localtime())}'
-    #         config = {'kernel': kernel, 'C': C, 'gamma': gamma, 'model': 'SVM'}
-    #         wandb.init(project=project_name, name=model_name, config=config)
-    #         agent_reward_list = evaluate_agent(model, env, sklearn_predict_action)
-    #         wandb.log({'training_time': train_duration, 'train_acc': acc, 'test_mean_reward': mean(agent_reward_list),
-    #                    'compared_to_rl': compare_agents_performance(rl_agent_mean, mean(agent_reward_list))})
-    #         wandb.finish()
-    #         if mean(agent_reward_list) > best_performance:
-    #             best_performance = mean(agent_reward_list)
-    #             best_model = model
-    # # Save video
-    # record_videos(best_model, env, sklearn_predict_action, log_dir=video_dir, num_episodes=n_videos, prefix='SVM-')
+    # Decision Tree Behavior Cloning
+    results_dict = pd.DataFrame(columns=[f'Decision Tree {i}' for i in range(1, 5)] + ['Logistic Regression'],
+                                index=['Performance compared to RL'])
+    for max_depth in range(1, 5):
+        cls = DecisionTreeClassifier(max_depth=max_depth, criterion='gini', random_state=0)
+        model = Pipeline([
+            ('scaler', MinMaxScaler()),
+            ('clf', cls)])
+        model.fit(X.values, y.values)
+        y_pred = model.predict(X.values)
+        acc = accuracy_score(y, y_pred)
 
-    # Decision Tree
-    cls = DecisionTreeClassifier(max_depth=4, criterion='gini', random_state=0)
-    model = Pipeline([
-        ('scaler', MinMaxScaler()),
-        ('clf', cls)])
-    model.fit(X.values, y.values)
-    y_pred = model.predict(X.values)
-    acc = accuracy_score(y, y_pred)
-    tree.plot_tree(cls)
+        # Save video
+        record_videos(model, env, sklearn_predict_fn, log_dir=log_dir, num_episodes=n_videos,
+                      prefix=f'DT-{max_depth}-')
 
-    # Evaluate Behavior Cloning agent on the RL environment
-    reward_list = evaluate_agent(model, env, sklearn_predict_fn, num_episodes=10)
-    average_reward = mean(reward_list)
-    performance_compared_to_rl = compare_agents_performance(average_reward, rl_agent_mean)
-    print(f"Decision Tree Agent:\nTraining accuracy = {acc}\nAverage reward = {average_reward}")
-    print(f"Performance compared to RL: {performance_compared_to_rl:.2f}")
+        # Plot and save decision tree
+        tree.plot_tree(cls, feature_names=dataset.columns[:-1], filled=True, class_names=action_names)
+        plt.savefig(f'{log_dir}dt-{max_depth}-tree.png', dpi=125 * max_depth)
 
-    # Feature Importances
-    dt_feature_importances = cls.feature_importances_
+        # Evaluate Behavior Cloning agent on the RL environment
+        reward_list = evaluate_agent(model, env, sklearn_predict_fn, num_episodes=n_evaluation_episodes)
+        average_reward = mean(reward_list)
+        performance_compared_to_rl = compare_agents_performance(rl_agent_mean, average_reward)
+        print(f"Decision Tree Agent:\nTraining accuracy = {acc}\nAverage reward = {average_reward}")
+        print(f"Performance compared to RL: {performance_compared_to_rl:.2f}")
+        results_dict.iloc[0, max_depth - 1] = performance_compared_to_rl
 
-    # Logistic regression
+        # Feature Importance Barplot
+        dt_feature_importances = cls.feature_importances_
+        plt.figure(max_depth, figsize=(10, 10))
+        plt.clf()
+        sns.barplot(x=dataset.columns[:-1], y=dt_feature_importances)
+        # plt.xticks(rotation=45)
+        plt.title(f'Decision Tree (max depth = {max_depth}) feature importances', fontdict={'size': 14})
+        plt.xlabel('Features')
+        plt.ylabel('Feature importance')
+        plt.savefig(f'{log_dir}dt-importances-{max_depth}.png', dpi=150)
+
+    # Logistic Regression Behavior Cloning
     cls = LogisticRegression(random_state=0)
     model = Pipeline([
         ('scaler', MinMaxScaler()),
@@ -121,17 +96,35 @@ def main():
     y_pred = model.predict(X.values)
     acc = accuracy_score(y, y_pred)
 
+    # Save video
+    record_videos(model, env, sklearn_predict_fn, log_dir=log_dir, num_episodes=n_videos,
+                  prefix='logistic-')
+
     # Evaluate Behavior Cloning agent on the RL environment
-    reward_list = evaluate_agent(model, env, sklearn_predict_fn, num_episodes=10)
+    reward_list = evaluate_agent(model, env, sklearn_predict_fn, num_episodes=n_evaluation_episodes)
     average_reward = mean(reward_list)
-    performance_compared_to_rl = compare_agents_performance(average_reward, rl_agent_mean)
+    performance_compared_to_rl = compare_agents_performance(rl_agent_mean, average_reward)
     print(f"\nLogistic Regression Agent:\nTraining accuracy = {acc}\nAverage reward = {average_reward}")
     print(f"Performance compared to RL: {performance_compared_to_rl:.2f}")
+    results_dict.iloc[0, -1] = performance_compared_to_rl
 
-    # Feature Importances
-    logistic_feature_importances = cls.coef_
+    # Feature Importance Barplot
+    # logistic_feature_importances = np.absolute(cls.coef_) / np.sum(np.absolute(cls.coef_))
+    # plt.figure(5, figsize=(10, 10))
+    # sns.barplot(x=dataset.columns[:-1], y=logistic_feature_importances.reshape(-1, ))
+    # # plt.xticks(rotation=45)
+    # plt.title(f'Logistic regression feature importances', fontdict={'size': 14})
+    # plt.xlabel('Features')
+    # plt.ylabel('Feature importance')
+    # plt.savefig(f'{log_dir}logistic-importances.png', dpi=150)
 
-    # TODO plot decision tree and logistic importances
+    # Plot Agent performance results
+    plt.figure(6, figsize=(10, 10))
+    sns.barplot(results_dict)
+    plt.title(f'Behavior cloning agent performance compared to RL', fontdict={'size': 16})
+    plt.xlabel('Agent')
+    plt.ylabel('Performance compared to RL')
+    plt.savefig(f'{log_dir}performance-comparison.png', dpi=150)
 
     # Execution Time
     end = time.perf_counter()
