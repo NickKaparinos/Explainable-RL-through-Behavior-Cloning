@@ -1,8 +1,0 @@
-Project Proposal
-
-Τίτλος "Explainable Reinforcement Learning through Behavior Cloning"
-
-Ο σκοπός αυτού του project είναι η εκπαίδευση ενός explainable πράκτορα, ο οποίος θα μπορεί να λύσει ένα πρόβλημα ενισχυτικής μαθησης.
-
-Καπαρινός Νίκος 119
-Χαμίτι Τζούλιο 106
