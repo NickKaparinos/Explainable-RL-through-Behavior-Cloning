@@ -1,4 +1,4 @@
-# Explainable Reinforcement Learning through Behavior Cloning.
+# Explainable Reinforcement Learning through Behavior Cloning
 
 - [Abstract](#abstract)
 - [Introduction](#introduction)
