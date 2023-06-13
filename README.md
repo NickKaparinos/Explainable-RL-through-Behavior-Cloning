@@ -6,6 +6,8 @@
 - [Methodology](#methodology)
 - [Results](#results)
   * [CartPole](#cartpole)
+  * [MountainCar](#mountaincar)
+  * [Acrobot](#acrobot)
 - [Conclusion](#conclusion)
 - [References](#references)
 
