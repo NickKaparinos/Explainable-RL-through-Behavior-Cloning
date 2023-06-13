@@ -1,5 +1,14 @@
 # Explainable Reinforcement Learning through Behavior Cloning.
 
+- [Abstract](#abstract)
+- [Introduction](#introduction)
+- [Related Work](#related-work)
+- [Methodology](#methodology)
+- [Results](#results)
+  * [CartPole](#cartpole)
+- [Conclusion](#conclusion)
+- [References](#references)
+
 ## Abstract
 Reinforcement learning (RL) has emerged as a powerful paradigm for training
 agents to make autonomous decisions in complex environments. However, the
