@@ -125,10 +125,16 @@ of each Decision Tree and the feature importance for the tree with max depth equ
 interpretability.
 
 ### CartPole
+<p align="center"><img src="https://github.com/NickKaparinos/Explainable-RL-through-Behavior-Cloning/blob/master/Figures/CartPole/performance-comparison.png" alt="drawing" width="500"/></p>
+<p align="center"><img src="https://github.com/NickKaparinos/Explainable-RL-through-Behavior-Cloning/blob/master/Figures/CartPole/dt-importances-3.png" width="500"/></p>
 
 ### MountainCar
+<p align="center"><img src="https://github.com/NickKaparinos/Explainable-RL-through-Behavior-Cloning/blob/master/Figures/MountainCar/performance-comparison.png" alt="drawing" width="500"/></p>
+<p align="center"><img src="https://github.com/NickKaparinos/Explainable-RL-through-Behavior-Cloning/blob/master/Figures/MountainCar/dt-importances-3.png" width="500"/></p>
 
 ### Acrobot
+<p align="center"><img src="https://github.com/NickKaparinos/Explainable-RL-through-Behavior-Cloning/blob/master/Figures/Acrobot/performance-comparison.png" alt="drawing" width="500"/></p>
+<p align="center"><img src="https://github.com/NickKaparinos/Explainable-RL-through-Behavior-Cloning/blob/master/Figures/Acrobot/dt-importances-3.png" width="500"/></p>
 
 ## Conclusion
 In this study, the challenge of achieving simultaneous performance and explainability
