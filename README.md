@@ -184,7 +184,7 @@ exhibit both performance and explainability by utilizing DRL with BC. The combi-
 nation of these approaches opens new avenues for deploying RL agents in real-world
 applications, in an attempt at enabling transparency, interpretability and collabora-
 tion between humans and RL systems. By bridging the gap between performance and
-explainability, the study aims for the adoption of RL agents in critical domains that
+explainability, this study aims for the adoption of RL agents in critical domains that
 demand both proficiency and transparency.
 
 ## References
